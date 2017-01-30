@@ -61,7 +61,6 @@ ax.set_xticklabels(day)
 ax.set_xlabel('Day of week')
 ax.set_ylabel('#Check-ins')
 ax.set_title('Check-in by day of week')
-f1.show()
 
 # plot by day/hour
 f2 = plt.figure(2)
@@ -76,7 +75,8 @@ for day_num in range(len(day)):
     axarr[day_num].stem(hour, n_checkins, markerfmt='bo')  
     #axarr[day_num].set_xticks(range(24))
     #axarr[day_num].set_xticklabels()
-f2.show()
+
+plt.show()
 
 #plt.setp([a.get_xticklabels() for a in axarr[0, :]], visible=False)
 #plt.setp([a.get_yticklabels() for a in axarr[:, 1]], visible=False)
