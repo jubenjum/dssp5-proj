@@ -56,7 +56,6 @@ y = np.array(data.user_id)
 X_train, X_test, y_train, y_test = train_test_split(X, y, 
         test_size=0.33)
 
-
 est = GradientBoostingRegressor(n_estimators=10000, learning_rate=0.01,
         max_depth=10000, random_state=0, loss='huber', verbose=5).fit(X_train, y_train)
 print mean_squared_error(y_test, est.predict(X_test))    
