@@ -1,1 +1,6 @@
-data
+data/google_supported_types
+data/gowalla-noisy
+data/gowalla-noisy_Paris
+data/loc-gowalla_edges.txt
+data/loc-gowalla_totalCheckins_Paris.txt
+data/loc-gowalla_totalCheckins.txt
