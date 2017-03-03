@@ -143,60 +143,72 @@ types_ = { 'accounting':0,
 
 types_ = OrderedDict(sorted(types_.items(), key=lambda t: t[0])) 
 
-# functions to read command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('json_file', metavar='JSON_FILE', nargs=1, 
-	help='read google json from places')
-args = parser.parse_args()
-json_file = args.json_file[0]
+
+def read_jgoogle(json_file):
+    ''' read_jgoogle reads a google jason site and returns its content as
+    a dictionary that contains a coded   
+
+    the json files have the folloging structure:
+
+        results->
+        geometry/location/lat,lon                        <-- usefull
+        geometry/viewpoint/Northeast,southwest/lat,lon
+        icon
+        id                                               <-- usefull     
+        name                                             <-- usefull
+        photos/heigth,html_attributions,photo_reference,width
+        place_id                                         <-- ?
+        reference
+        scope
+        types                                            <-- usefull
+        vicinity                                         <-- usefull
+
+        the fist level on the json has the label html_attributions and it 
+        is empty for the queries I have done
+
+    '''
+
+    # decode json file
+    with open(json_file) as jfile:
+        try:
+            all_data = json.load(jfile)
+        except:
+            print '...ERR... {}'.format(json_file)   
+            sys.exit()
 
 
-# decode json file
-with open(json_file) as jfile:
-    try:
-        all_data = json.load(jfile)
-    except:
-        print '...ERR... {}'.format(json_file)   
-	sys.exit()
-
-# Google's result depends on the type of place but in general:
-#
-# results->
-# geometry/location/lat,lon                        <-- usefull
-# geometry/viewpoint/Northeast,southwest/lat,lon
-# icon
-# id                                               <-- usefull     
-# name                                             <-- usefull
-# photos/heigth,html_attributions,photo_reference,width
-# place_id                                         <-- ?
-# reference
-# scope
-# types                                            <-- usefull
-# vicinity                                         <-- usefull
-
-# the fist level on the json has the label html_attributions and it 
-# is empty for the queries I have done
-
-data = all_data["results"]
-for d in data:
-    copy_type_ = deepcopy(types_)
-    lat = d['geometry']['location']['lat']
-    lon = d['geometry']['location']['lng'] 
-    name = d['name']
-    place_id = d['place_id']
-    types = d['types']
+    data = all_data["results"]
+    for d in data:
+        copy_type_ = deepcopy(types_)
+        lat = d['geometry']['location']['lat']
+        lon = d['geometry']['location']['lng'] 
+        name = d['name']
+        place_id = d['place_id']
+        types = d['types']
+        
+        # coding the google types into a hash 
+        try:
+            for t in types:
+                print(u'{},{},"{}","{}","{}"'.format(lat, lon, name, place_id[:10], t))
+        except:
+            print(u'{}'.format(json_file))
+            copy_type_[t] = 1
+            print t
+        hash_type = ''.join(['{:1d}'.format(s) for s in copy_type_.values()])
+        print('{},{},"{}","{}",{}'.format(lat, lon, name, place_id[:10], hash_type))
     
-    # coding the google types into a hash 
-    try:
-        for t in types:
-            print(u'{},{},"{}","{}","{}"'.format(lat, lon, name, place_id[:10], t))
-    except:
-        print(u'{}'.format(json_file))
-    #    copy_type_[t] = 1
-    #    print t
-    #hash_type = ''.join(['{:1d}'.format(s) for s in copy_type_.values()])
-    #print('{},{},"{}","{}",{}'.format(lat, lon, name, place_id[:10], hash_type))
-    
+def main(json_file):
+    read_jgoogle(json_file)
 
 
 
+if __name__ == '__main__':
+    import argparse
+
+    # functions to read command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('json_file', metavar='JSON_FILE', nargs=0, 
+            help='read google json from places')
+    args = parser.parse_args()
+    json_file = args.json_file[0]
+    main(json_file)
