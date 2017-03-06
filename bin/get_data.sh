@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 10m ~ 1e-4 deg <- precision
-awk '{printf("%07.4f_%07.4f_10\n", $3, $4)}' \
+awk '{printf("%07.4f_%07.4f_100\n", $3, $4)}' \
     data/loc-gowalla_totalCheckins_Paris.txt | sort -u > list_coords
 
 for l in $(cat list_coords); do
@@ -11,7 +11,7 @@ for l in $(cat list_coords); do
     name=$(echo "LAT"$lat"_LON"$lon"_DIST"$dist'.json')
     echo $name
     ./bin/get_near.py $lat $lon $dist > data/sites/$name
-    sleep $(( ( RANDOM % 20 )  + 1 ))
+    sleep $(( ( RANDOM % 2 )  + 1 ))
 done
 
 ###

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import argparse
 import json
 import urllib2
@@ -51,21 +50,22 @@ def get_near(lat,lon, dist):
     f = urllib2.urlopen(req)
     return f.read()
 
-# functions to read command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('lat', metavar='LATITUDE', nargs=1, help='latitude')
-parser.add_argument('lon', metavar='LONGITUDE', nargs=1, help='logitude')
-parser.add_argument('dist', metavar='distance', nargs=1, help='dist(m)')
-args = parser.parse_args()
 
-# 10m ~ 0.0001 deg
-
-
-lat=float(args.lat[0])
-lon=float(args.lon[0])
-dist=int(float(args.dist[0]))
-
-print get_near(lat,lon,dist)
+if __name__ == '__main__':
+    # functions to read command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('lat', metavar='LATITUDE', nargs=1, help='latitude')
+    parser.add_argument('lon', metavar='LONGITUDE', nargs=1, help='logitude')
+    parser.add_argument('dist', metavar='distance', nargs=1, help='dist(m)')
+    args = parser.parse_args()
+    
+    # 10m ~ 0.0001 deg
+    
+    lat=float(args.lat[0])
+    lon=float(args.lon[0])
+    dist=int(float(args.dist[0]))
+    
+    print get_near(lat,lon,dist)
 
 
 

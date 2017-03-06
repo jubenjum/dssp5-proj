@@ -10,7 +10,10 @@ import glob
 import os.path
 import pprint
 
+
 import numpy as np
+import pandas as pd
+
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -152,7 +155,6 @@ types_ = { 'accounting':0,
 # the following line is not needed on python >3.0 
 types_ = OrderedDict(sorted(types_.items(), key=lambda t: t[0])) 
 
-
 def read_jgoogle(json_file, verbose=False):
     ''' read_jgoogle reads a google jason site and returns its content as
     a dictionary that contains a coded   
@@ -291,11 +293,7 @@ class Sites(object):
         with open(pickle_sig, 'rb') as pkl_file:
             self.spot_signatures = pickle.load(pkl_file)
 
-        _to_pandas()
-
-
-def main(json_file):
-    res = read_jgoogle(json_file, verbose=True)
+        self._to_pandas()
 
 
 if __name__ == '__main__':
@@ -308,4 +306,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     json_file = args.json_file[0]
     pickle_spot_signature()
-    #main(json_file)
+    read_jgoogle(json_file, verbose=True)
