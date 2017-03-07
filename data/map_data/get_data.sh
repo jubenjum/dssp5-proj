@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # arrondissement shapes from http://wiki.openstreetmap.org/wiki/Paris
-
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=20727 > a01.gpx
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=9542  > a02.gpx
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=20742 > a03.gpx

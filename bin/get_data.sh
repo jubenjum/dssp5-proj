@@ -11,7 +11,7 @@ for l in $(cat list_coords); do
     name=$(echo "LAT"$lat"_LON"$lon"_DIST"$dist'.json')
     echo $name
     ./bin/get_near.py $lat $lon $dist > data/sites/$name
-    sleep $(( ( RANDOM % 2 )  + 1 ))
+    sleep $(( ( RANDOM % 5 )  + 1 ))
 done
 
 ###
