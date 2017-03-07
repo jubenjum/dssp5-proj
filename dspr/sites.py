@@ -18,7 +18,7 @@ import pandas as pd
 pp = pprint.PrettyPrinter(indent=4)
 
 # types supported by google from https://developers.google.com/places/supported_types
-types_ = { 'accounting':0,
+TYPES_ = { 'accounting':0,
            'administrative_area_level_1':0,
            'administrative_area_level_2':0,
            'administrative_area_level_3':0,
@@ -153,7 +153,7 @@ types_ = { 'accounting':0,
 
 
 # the following line is not needed on python >3.0 
-types_ = OrderedDict(sorted(types_.items(), key=lambda t: t[0])) 
+TYPES_ = OrderedDict(sorted(TYPES_.items(), key=lambda t: t[0])) 
 
 def read_jgoogle(json_file, verbose=False):
     ''' read_jgoogle reads a google jason site and returns its content as
@@ -196,7 +196,7 @@ def read_jgoogle(json_file, verbose=False):
     data = all_data["results"]
     for d in data:
         decoded_data = dict()
-        spot_signature = deepcopy(types_)
+        spot_signature = deepcopy(TYPES_)
         decoded_data['lat'] = d['geometry']['location']['lat']
         decoded_data['lon'] = d['geometry']['location']['lng'] 
         decoded_data['name'] = d['name']
@@ -226,7 +226,8 @@ def read_jgoogle(json_file, verbose=False):
             print(t_.encode('utf-8'))
 
         # including the signature into the decoded data
-        decoded_data['spot_signature'] = spot_signature
+        # decoded_data have lat, lon, name, place_id, and the spot_signature that is list
+        decoded_data['spot_signature'] = spot_signature.values()
         all_decoded.append(decoded_data) 
         #pp.pprint(decoded_data)
 
@@ -274,19 +275,30 @@ class Sites(object):
         #self.get_spot_signature(self, self.pkl_file) 
 
     def find_closer(self, lat, lon, n=5):
-        '''given a latitude an longitude return the n closest values'''
+        '''given a latitude an longitude return the n closest values,
+        for example the output Eiffel tower, the distnce is in degrees, 
+        that it is equivalent to 111km by deg 
+
+        >> print s.find_closer(48.8584, 2.2945, 1)
+                    lat       lon              name  place_id  \
+        8597  48.858369  2.294485  Eifl tower (Sun)  ChIJa9dx   
         
-        self.data['dist'] = data.apply(lambda x: 
+                                                 spot_signature      dist  
+        8597  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...  0.000035  
+        
+        '''
+        
+        self.data['dist'] = self.data.apply(lambda x: 
                 np.sqrt((x['lat']-lat)**2.0 + (x['lon'] - lon)**2.0), 
                 axis=1) 
-        return data.sort(['dist'], ascending=[1]).head(n)
+        return self.data.sort(['dist'], ascending=[1]).head(n)
 
     def _to_pandas(self):
         '''convert spot_signature from dict to pandas dataframe'''
         self.data = pd.DataFrame.from_dict(self.spot_signatures)
 
     def get_spot_signature(self, pickle_sig):
-        ''' get spot signature from pickle '''
+        ''' get spot signature from pickle file set on the var pickle_sig'''
         if not os.path.exists(pickle_sig):
             raise IOError('file doest exit')
         
@@ -297,13 +309,11 @@ class Sites(object):
 
 
 if __name__ == '__main__':
-    import argparse
 
-    # functions to read command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('json_file', metavar='JSON_FILE', nargs=1, 
-            help='read google json from places')
-    args = parser.parse_args()
-    json_file = args.json_file[0]
-    pickle_spot_signature()
-    read_jgoogle(json_file, verbose=True)
+    # test for Eiffel Tower 
+    pkl_file = 'data/spot_sig.pkl'
+    s = Sites(pkl_file)
+    s.get_spot_signature(pkl_file)
+    print s.find_closer(48.8584, 2.2945, 1)
+     
+
