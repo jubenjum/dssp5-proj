@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# wget -O paris.osm "http://api.openstreetmap.org/api/0.6/map?bbox=2.2222,48.8129,2.4517,48.9116"
+
 # arrondissement shapes from http://wiki.openstreetmap.org/wiki/Paris
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=20727 > a01.gpx
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=9542  > a02.gpx
