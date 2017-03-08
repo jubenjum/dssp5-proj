@@ -24,6 +24,6 @@ curl http://ra.osmsurround.org/exportRelation/gpx?relationId=9531  > a18.gpx
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=9552  > a19.gpx
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=9529  > a20.gpx
 
-# la seine - https://wiki.openstreetmap.org/wiki/WikiProject_France/Cours_d'eau
-curl http://ra.osmsurround.org/exportRelation/gpx?relationId=962076 > seine.gpx
+## la seine - https://wiki.openstreetmap.org/wiki/WikiProject_France/Cours_d'eau
+#curl http://ra.osmsurround.org/exportRelation/gpx?relationId=962076 > seine.gpx
 

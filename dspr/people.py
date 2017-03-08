@@ -161,13 +161,14 @@ def _compute_path_signature(pandas_data, d, search_func):
     df = pd.DataFrame(columns=('user_id','user_signature'))
     
     users_ = [ int(x) for x in pandas_data['user_id'].unique()]
-    with Parallel(n_jobs=2) as parallel:
-       _r = parallel(delayed(u_func)(u) for u in users_)
-       df = df.append(_r, ignore_index=True)
+    f_ = search_func
+    ##with Parallel(n_jobs=2) as parallel:
+    ##   _r = parallel(delayed(u_func)(u, pandas_data, d, f_) for u in users_)
+    ##   df = df.append(_r, ignore_index=True)
 
-    #for user in pandas_data['user_id'].unique():
-    #   _r = u_func(user, pandas_data, d, search_func)
-    #   df = df.append(_r, ignore_index=True) 
+    for user in pandas_data['user_id'].unique():
+       _r = u_func(user, pandas_data, d, search_func)
+       df = df.append(_r, ignore_index=True) 
 
     return df 
 
