@@ -18,7 +18,7 @@ import pprint
 
 import numpy as np
 import pandas as pd
-
+from joblib import Parallel, delayed
 
 from dspr.sites import Sites 
 
@@ -80,16 +80,32 @@ class People(Sites):
     def compute_path_signature(self):
         '''for each user compute the path signature that is the sum of spot signatures 
         where the pearson has been'''
-        df = pd.DataFrame(columns=('user_id','user_signature'))
-        idx_ = 0
-        for user in self.people_param['pandas_data']['user_id'].unique():
+
+        def u_func(user):
+            '''just try to paralilize this part of the code ... '''
             user_signatures = np.zeros((1, self.people_param['d']), dtype=int)
             for lat_, lon_ in self.people_param['pandas_data']\
                 [self.people_param['pandas_data']['user_id'] == user][['lat','lon']].as_matrix():
                 _sig = np.array([x for x in self.sites_find_closer_site(lat_, lon_, 5)\
-                                                ['spot_signature']], dtype=int)
+                                                       ['spot_signature']], dtype=int)
                 user_signatures = np.append(user_signatures, _sig, axis=0)
             user_signature = np.sum(user_signatures, axis=0)
+            return user_signature
+
+
+        df = pd.DataFrame(columns=('user_id','user_signature'))
+        idx_ = 0
+
+        for user in self.people_param['pandas_data']['user_id'].unique():
+            user_signature = u_func(user)
+
+            #user_signatures = np.zeros((1, self.people_param['d']), dtype=int)
+            #for lat_, lon_ in self.people_param['pandas_data']\
+            #    [self.people_param['pandas_data']['user_id'] == user][['lat','lon']].as_matrix():
+            #    _sig = np.array([x for x in self.sites_find_closer_site(lat_, lon_, 5)\
+            #                                    ['spot_signature']], dtype=int)
+            #    user_signatures = np.append(user_signatures, _sig, axis=0)
+            #user_signature = np.sum(user_signatures, axis=0)
 
             df.loc[idx_] = [user, user_signature]
             idx_+=1
@@ -119,8 +135,4 @@ if __name__ == '__main__':
     p.compute_path_signature()
     people_signatures_file = 'data/people_signature.pkl'
     p.save_people_signatures(people_signatures_file)
-
-
-
-
 
