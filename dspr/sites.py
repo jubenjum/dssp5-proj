@@ -286,7 +286,7 @@ class Sites(object):
     def initialize_args(self, kwargs):
         ''' '''
         if self.sites_param['pkl_file']:
-            get_spot_signature(self.sites_param['pkl_file'])
+            self.get_spot_signature(self.sites_param['pkl_file'])
              
 
     def sites_find_closer_site(self, lat, lon, n=5):

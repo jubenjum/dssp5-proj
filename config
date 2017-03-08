@@ -7,7 +7,7 @@
 
 
 # number of jobs for parallel and/or joblib
-export NUM_JOBS=2
+export NUM_JOBS=3
 
 # variables for faiss library
 export PYTHONPATH=/fhgfs/bootphon/scratch/jbenjumea/software/faiss:$PYTHONPATH                 

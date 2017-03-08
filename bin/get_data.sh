@@ -22,7 +22,7 @@ for f in $(grep OVER_QUERY_LIMIT -l data/sites/*); do
     dist=$(echo $f | cut -c38-39)
     echo $f
     ./bin/get_near.py $lat $lon $dist > $f 
-    sleep $(( ( RANDOM % 10 )  + 1 ))
+    sleep $(( ( RANDOM % 2 )  + 1 ))
 done
 
 

@@ -14,7 +14,6 @@ import cPickle as pickle
 import glob
 import os.path
 import pprint
-from multiprocessing import Process, Value, Lock
 
 import numpy as np
 import pandas as pd
@@ -50,22 +49,6 @@ def read_gowalla(file_name):
         parse_dates=parse_dates, names=headers) 
 
 
-
-class Counter(object):
-    ''' shared counter from goo.gl/Z3HJTj '''
-    def __init__(self, initval=0):
-        self.val = Value('i', initval)
-        self.lock = Lock()
-
-    def increment(self):
-        with self.lock:
-            self.val.value += 1
-
-    def value(self):
-        with self.lock:
-            return self.val.value
-
-
 class People(Sites):
     ''' People class stores Gowalla data and methods to access '''
 
@@ -90,12 +73,14 @@ class People(Sites):
             people_param['pandas_data'] = read_gowalla(self.people_param['data_file'])
     
     def people_to_pickle(self, pandas_pickle):
-        ''' '''
+        ''' to pickle '''
         self.people_param['pkl_pandas'] = pandas_pickle
         self.people_param['pandas_data'].to_pickle(pandas_pickle) # pandas to_pickle
 
     def people_from_pickle(self, pandas_pickle):
         '''read the Gowalla pandas pickle'''
+        if not os.path.exists(pandas_pickle):
+            raise OSError("file pandas_pickle doesnt not set")
         self.sites_param['pandas_data'] =  pd.read_pickle(pandas_pickle)
 
     def get_people_data(self, data_file):
@@ -112,43 +97,27 @@ class People(Sites):
     def compute_path_signature(self):
         '''for each user compute the path signature that is the sum of spot signatures 
         where the pearson has been'''
-
-        ####def u_func(user):
-        ####    '''just try to paralilize this part of the code ... '''
-        ####    user_signatures = np.zeros((1, self.people_param['d']), dtype=int)
-        ####    for lat_, lon_ in self.people_param['pandas_data']\
-        ####        [self.people_param['pandas_data']['user_id'] == user][['lat','lon']].as_matrix():
-        ####        _sig = np.array([x for x in self.sites_find_closer_site(lat_, lon_, 5)\
-        ####                                               ['spot_signature']], dtype=int)
-        ####        user_signatures = np.append(user_signatures, _sig, axis=0)
-        ####    user_signature = np.sum(user_signatures, axis=0)
-	####    df_user = pd.DataFrame([[user, user_signature]],
-	####		columns=('user_id','user_signature'))
-        ####    self.df = self.df.append(df_user, ignore_index=True) 
-        ####    print '{} = {}'.format(user, user_signature)
-
-        ####self.df = pd.DataFrame(columns=('user_id','user_signature'))
-        ####
-	####### multithread ... user_id can be non integer?
-	######users_ = [ int(x) for x in self.people_param['pandas_data']['user_id'].unique()]
-	######with Parallel(n_jobs=2) as parallel:
-	######    parallel(delayed(u_func)(u) for u in users_) 
-
-	##### single thread
-	####for user in self.people_param['pandas_data']['user_id'].unique():
-	####    u_func(user)
-
-        ####self.people_param['people_signatures'] = self.df
-        
 	self.people_param['people_signatures'] = _compute_path_signature(self.people_param['pandas_data'], \
-	         self.people_param['d'], self.sites_find_closer_site)
+	         self.people_param['d'], self.sites_param['pandas_data'])
 
 
-def u_func(user, pandas_data, d, search_func):
-    '''just try to paralilize this part of the code ... '''
+def _compute_path_signature(people_data, d, spot_data):
+    ''' single thread computation of path signature (used insde People class) '''
+    df = pd.DataFrame(columns=('user_id','user_signature'))
+    for user in people_data['user_id'].unique():
+       _r = h_func_signature(user, people_data, d, spot_data)
+       df = df.append(_r, ignore_index=True) 
+
+    return df 
+
+def h_func_signature(user, pandas_data, d, spot_data):
+    ''' parallel version of the  '''
+    n = 5
     user_signatures = np.zeros((1, d), dtype=int)
     for lat_, lon_ in pandas_data[pandas_data['user_id'] == user][['lat','lon']].as_matrix():
-        _sig = np.array([x for x in search_func(lat_, lon_, 5)['spot_signature']], dtype=int)
+        idx_ =  spot_data.apply(lambda x: np.sqrt((x['lat']-lat_)**2.0 \
+                + (x['lon'] - lon_)**2.0), axis=1).sort_values(ascending=[1]).head(n).index.tolist()
+        _sig = np.array([x for x in spot_data.spot_signature.iloc[idx_]], dtype=int)
         user_signatures = np.append(user_signatures, _sig, axis=0)
     user_signature = np.sum(user_signatures, axis=0)
     df_user = pd.DataFrame([[user, user_signature]], columns=('user_id','user_signature'))
@@ -156,19 +125,19 @@ def u_func(user, pandas_data, d, search_func):
     return df_user
 
 
-def _compute_path_signature(pandas_data, d, search_func):
-    ''' '''
-    df = pd.DataFrame(columns=('user_id','user_signature'))
-    
-    users_ = [ int(x) for x in pandas_data['user_id'].unique()]
-    f_ = search_func
-    ##with Parallel(n_jobs=2) as parallel:
-    ##   _r = parallel(delayed(u_func)(u, pandas_data, d, f_) for u in users_)
-    ##   df = df.append(_r, ignore_index=True)
+def parallel_comp_path_signature(pandas_data, pandas_pickle, d, n_jobs=1):
+    ''' the same that _compute_path_signature but multithread '''
+    global NUM_JOBS
+    pandas_data = read_gowalla(pandas_data)
+    with open(pandas_pickle, 'rb') as pkl_file_:
+        spot_signatures = pickle.load(pkl_file_)
+        spot_data = pd.DataFrame.from_dict(spot_signatures)
 
-    for user in pandas_data['user_id'].unique():
-       _r = u_func(user, pandas_data, d, search_func)
-       df = df.append(_r, ignore_index=True) 
+    df = pd.DataFrame(columns=('user_id','user_signature'))
+    users_ = [ int(x) for x in pandas_data['user_id'].unique()]
+    with Parallel(n_jobs=n_jobs) as parallel: 
+        _r = parallel(delayed( h_func_signature)(u, pandas_data, d, spot_data) for u in users_)
+        df = df.append(_r, ignore_index=True)
 
     return df 
 
@@ -180,15 +149,21 @@ if __name__ == '__main__':
     pandas_pickle = 'data/sites_pandas.pkl'
     spot_signatures = 'data/spot_signatures.npz' # contain only the an numpy array with signatures
     data_gowalla_paris = 'data/loc-gowalla_totalCheckins_Paris.txt'
-    p = People()
-    if os.path.exists(pandas_pickle):
-        print "Read pandas pickle ..."
-        p.sites_from_pickle(pandas_pickle)
-    else :
-        p.get_spot_signature(pkl_file)
-    
-    p.get_people_data(data_gowalla_paris)
-    p.compute_path_signature()
     people_signatures_file = 'data/people_signature.pkl'
-    p.save_people_signatures(people_signatures_file)
+    
+    d = 130
+    df = parallel_comp_path_signature(data_gowalla_paris, pandas_pickle, d, n_jobs=3)
+    df.to_pickle(people_signatures_file) # contains user and user_signature
+
+
+    #p = People(pandas_pickle)
+    #if os.path.exists(pandas_pickle):
+    #    print "Read pandas pickle ..."
+    #    p.sites_from_pickle(pandas_pickle)
+    #else :
+    #    p.get_spot_signature(pkl_file)
+    #
+    #p.get_people_data(data_gowalla_paris)
+    #p.compute_path_signature()
+    #p.save_people_signatures(people_signatures_file)
 
