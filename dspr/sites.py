@@ -267,19 +267,34 @@ class Sites(object):
     ''' stores site information from google sites
     '''
 
-    def __init__(self, pkl_file):
-        self.pkl_file = pkl_file
-        if not os.path.exists(self.pkl_file):
-            raise IOError('file doest exit')  
+    sites_param = {'pkl_file' : '', 
+                   'pandas_data' : '',
+                   'spot_signatures_file' : '',
+                   'spot_signatures' : '',
+                   'pkl_pandas' : '',
+                   'np_spot_signatures' : ''}
 
-        #self.get_spot_signature(self, self.pkl_file) 
+    def __init__(self, parent=None, **kwargs):
+        ''' '''
+       
+        if kwargs:
+           self.sites_param.update(kwargs)
 
-    def find_closer(self, lat, lon, n=5):
+        self.initialize_args(kwargs)
+
+
+    def initialize_args(self, kwargs):
+        ''' '''
+        if self.sites_param['pkl_file']:
+            get_spot_signature(self.sites_param['pkl_file'])
+             
+
+    def sites_find_closer_site(self, lat, lon, n=5):
         '''given a latitude an longitude return the n closest values,
         for example the output Eiffel tower, the distnce is in degrees, 
         that it is equivalent to 111km by deg 
 
-        >> print s.find_closer(48.8584, 2.2945, 1)
+        >> print s.sites_find_closer_site(48.8584, 2.2945, 1)
                     lat       lon              name  place_id  \
         8597  48.858369  2.294485  Eifl tower (Sun)  ChIJa9dx   
         
@@ -288,32 +303,91 @@ class Sites(object):
         
         '''
         
-        self.data['dist'] = self.data.apply(lambda x: 
+        self.sites_param['pandas_data']['dist'] = self.sites_param['pandas_data'].apply(lambda x: 
                 np.sqrt((x['lat']-lat)**2.0 + (x['lon'] - lon)**2.0), 
                 axis=1) 
-        return self.data.sort(['dist'], ascending=[1]).head(n)
+        return self.sites_param['pandas_data'].sort_values(by='dist', ascending=[1]).head(n)
 
-    def _to_pandas(self):
+    def sites_to_pandas(self):
         '''convert spot_signature from dict to pandas dataframe'''
-        self.data = pd.DataFrame.from_dict(self.spot_signatures)
+        self.sites_param['pandas_data'] = pd.DataFrame.from_dict(self.sites_param['spot_signatures_file'])
+        self.sites_param['spot_signatures'] = self._transf_to_np()
+
+    def sites_to_pickle(self, pandas_pickle):
+        ''' '''
+        self.sites_param['pkl_pandas'] = pandas_pickle
+        self.sites_param['pandas_data'].to_pickle(pandas_pickle)
+
+    def sites_from_pickle(self, pandas_pickle):
+        ''' '''
+        self.sites_param['pandas_data'] =  pd.read_pickle(pandas_pickle)
+        self.sites_param['spot_signatures'] = self._transf_to_np()
+    
+    def _transf_to_np(self):
+        '''transform the pandas spot_signature to a numpy array'''
+        return np.array( [x for x in  
+            self.sites_param['pandas_data']['spot_signature']], dtype=int)
+
+ 
+    def sites_find_idx(self, idx):
+        '''getting data from its panda index'''
+        return self.sites_param['pandas_data'].iloc[idx]
+
+    def get_spot_signature_idx(self, idx):
+        '''get the list that represent the spot signature from the pandas idx'''
+        return np.array(self.sites_param['pandas_data'].iloc[idx]['_spot_signature'], dtype=int)
+
+    def save_all_spot_signatures(self, np_spot_signatures):
+        '''save the signatures in an npz file numpy array'''
+        # print  self.sites_param['spot_signatures']
+        np.savez(np_spot_signatures, self.sites_param['spot_signatures'])
+
+    def load_all_spot_signaures(self, np_spot_signatures):
+        ''' return the signatures stored on np_spot_signatures file'''
+        n = np.load(np_spot_signatures)
+        self.sites_param['spot_signatures'] = n[n.files[0]]
+        #return n[n.files[0]]
 
     def get_spot_signature(self, pickle_sig):
-        ''' get spot signature from pickle file set on the var pickle_sig'''
+        ''' get spot signature from pickle file set on the '''
         if not os.path.exists(pickle_sig):
-            raise IOError('file doest exit')
+            raise IOError('{} file doest exit'.format(pickle_sig))
         
-        with open(pickle_sig, 'rb') as pkl_file:
-            self.spot_signatures = pickle.load(pkl_file)
+        # does it exist the picke in internal representation?
+        if pickle_sig:
+            self.sites_param['pkl_file'] = pickle_sig
+        
+        with open(self.sites_param['pkl_file'], 'rb') as pkl_file_:
+            self.sites_param['spot_signatures_file'] = pickle.load(pkl_file_)
 
-        self._to_pandas()
+        self.sites_to_pandas()
 
 
 if __name__ == '__main__':
 
     # test for Eiffel Tower 
     pkl_file = 'data/spot_sig.pkl'
-    s = Sites(pkl_file)
-    s.get_spot_signature(pkl_file)
-    print s.find_closer(48.8584, 2.2945, 1)
+    pandas_pickle = 'data/sites_pandas.pkl'
+    spot_signatures = 'data/spot_signatures.npz' # contain only the an numpy array with signatures
+    s = Sites()
+    if os.path.exists(pandas_pickle):
+        print "Read pandas pickle ..."
+        s.sites_from_pickle(pandas_pickle)
+    else:
+        s.get_spot_signature(pkl_file)
+
+    print "finding the closest to Eiffel Tower ..." 
+    print s.sites_find_closer_site(48.8584, 2.2945, 1)
+    print 
+    print "get data from idx ... 8597"
+    print s.sites_find_idx(8597)
+
+    if not os.path.exists(pandas_pickle):
+        print "writing pandas pickle ..."
+        s.sites_to_pickle(pandas_pickle)
+
+    if not os.path.exists(spot_signatures):
+        print "writing signature numpy ..."
+        s.save_all_spot_signatures(spot_signatures) # to be used with faiss
      
 
