@@ -18,3 +18,13 @@ to build the report I used pandoc and livetex with extensions, to install in ubu
     $ sudo apt-get install pandoc texlive texlive-latex-extra texlive-xetex 
 
 
+GEODATA
+=======
+
+OpenStreetMap compilation for Paris from:
+
+https://mapzen.com/data/metro-extracts/metro/paris_france/
+
+
+
+
