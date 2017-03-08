@@ -17,6 +17,8 @@ to build the report I used pandoc and livetex with extensions, to install in ubu
 
     $ sudo apt-get install pandoc texlive texlive-latex-extra texlive-xetex 
 
+check the webpage: https://kieranhealy.org/blog/archives/2014/01/23/plain-text/ that have a good explanation on how to write a markdown to do a article or report
+
 
 GEODATA
 =======
