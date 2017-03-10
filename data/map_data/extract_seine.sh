@@ -1,6 +1,7 @@
 #!/bin/bash
 
-geojson=paris_france_osm_line.geojson
+#geojson=paris_france_osm_line.geojson
+geojson=arrondissements.csv
 
 if [ ! -f $geojson ]; then 
     echo "file $geojson not found ";
@@ -10,16 +11,11 @@ if [ ! -f $geojson ]; then
 fi
 
 
-if ! file $geojson
-    echo "file not "
-    exit 0
-fi
-
 
 # for each line in the file geojon extract lat lon in a differente file
 
 # how many vectors?
-n_vectors=$(grep 'La Seine' paris_france_osm_line.geojson | wc -l)
+n_vectors=$(grep 'La Seine' $geojson | wc -l)
 
 for line in $(seq 1 $n_vectors); do
     n_=$(printf "%02d" $line)
