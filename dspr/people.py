@@ -24,9 +24,22 @@ from dspr.sites import Sites
 
 # initilize environmental variables
 try:
-    NUM_JOBS = os.environ['NUM_JOBS']
+    NUM_JOBS = int(os.environ['NUM_JOBS'])
 except:
     NUM_JOBS = 1
+
+
+try:
+    SPOT_SIGNATURES = os.environ['SPOT_SIGNATURES']
+except:
+    print('SPOT_SIGNATURES')
+    raise
+
+
+try:
+    PEOPLE_SIGNATURES = os.environ['PEOPLE_SIGNATURES']
+except:
+    print('SPOT_SIGNATURES')
 
 
 def read_gowalla(file_name):
@@ -110,13 +123,12 @@ def _compute_path_signature(people_data, d, spot_data):
 
     return df 
 
-def h_func_signature(user, pandas_data, d, spot_data):
-    ''' parallel version of the  '''
-    n = 5
+def h_func_signature(user, pandas_data, d, spot_data, n_neighbours=5):
+    ''' computing the people signatures from their checkins using n_neighbours'''
     user_signatures = np.zeros((1, d), dtype=int)
     for lat_, lon_ in pandas_data[pandas_data['user_id'] == user][['lat','lon']].as_matrix():
         idx_ =  spot_data.apply(lambda x: np.sqrt((x['lat']-lat_)**2.0 \
-                + (x['lon'] - lon_)**2.0), axis=1).sort_values(ascending=[1]).head(n).index.tolist()
+                + (x['lon'] - lon_)**2.0), axis=1).sort_values(ascending=[1]).head(n_neighbours).index.tolist()
         _sig = np.array([x for x in spot_data.spot_signature.iloc[idx_]], dtype=int)
         user_signatures = np.append(user_signatures, _sig, axis=0)
     user_signature = np.sum(user_signatures, axis=0)
@@ -127,7 +139,6 @@ def h_func_signature(user, pandas_data, d, spot_data):
 
 def parallel_comp_path_signature(pandas_data, pandas_pickle, d, n_jobs=1):
     ''' the same that _compute_path_signature but multithread '''
-    global NUM_JOBS
     pandas_data = read_gowalla(pandas_data)
     with open(pandas_pickle, 'rb') as pkl_file_:
         spot_signatures = pickle.load(pkl_file_)
@@ -152,9 +163,8 @@ if __name__ == '__main__':
     people_signatures_file = 'data/people_signature.pkl'
     
     d = 130
-    df = parallel_comp_path_signature(data_gowalla_paris, pandas_pickle, d, n_jobs=3)
+    df = parallel_comp_path_signature(data_gowalla_paris, pandas_pickle, d, n_jobs=NUM_JOBS)
     df.to_pickle(people_signatures_file) # contains user and user_signature
-
 
     #p = People(pandas_pickle)
     #if os.path.exists(pandas_pickle):

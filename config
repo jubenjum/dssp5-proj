@@ -1,16 +1,27 @@
 
+# Juan Benjumea - 2017
+
+
 # environmental shell variables used on the project
 # to activate these variables type in the bash terminal:
 #
 #    . config
 #
 
-
 # number of jobs for parallel and/or joblib
 export NUM_JOBS=3
 
-# variables for faiss library
-export PYTHONPATH=/fhgfs/bootphon/scratch/jbenjumea/software/faiss:$PYTHONPATH                 
-export LD_LIBRARY_PATH=/fhgfs/bootphon/scratch/jbenjumea/software/gcc5.4/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cm/shared/apps/cuda80/toolkit/lib64                   
+# variables for faiss library, all instation in the current directory
+export PYTHONPATH=$PWD/faiss:$PYTHONPATH                 
+export LD_LIBRARY_PATH=$PWD/faiss:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=/fhgfs/bootphon/scratch/jbenjumea/software/gcc5.4/lib64:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cm/shared/apps/cuda80/toolkit/lib64                   
+
+# activate conda dssp5 environmt
+source activate dssp5
+
+# data files
+export SPOT_SIGNATURES='data/sites_pandas.pkl'
+export DATA_GOWALLA_TXT='data/loc-gowalla_totalCheckins_Paris.txt'
+export PEOPLE_SIGNATURES="data/people_signature.pkl" 
 
