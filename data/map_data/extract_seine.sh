@@ -10,8 +10,6 @@ if [ ! -f $geojson ]; then
     exit 0;
 fi
 
-
-
 # for each line in the file geojon extract lat lon in a differente file
 
 # how many vectors?

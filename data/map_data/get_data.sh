@@ -2,9 +2,8 @@
 
 # wget -O paris.osm "http://api.openstreetmap.org/api/0.6/map?bbox=2.2222,48.8129,2.4517,48.9116"
 
-
 # paris
-curl https://sites.google.com/site/geocachesdepartements/essai/75-Paris.gpx?attredirects=0&d=1 > paris.gpx
+#curl https://sites.google.com/site/geocachesdepartements/essai/75-Paris.gpx?attredirects=0&d=1 > paris.gpx
 
 # arrondissement shapes from http://wiki.openstreetmap.org/wiki/Paris
 curl http://ra.osmsurround.org/exportRelation/gpx?relationId=20727 | grep 'trkpt' | cut -d'"' -f2,4 --output-delimiter=',' > a01.xy
