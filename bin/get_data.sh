@@ -14,9 +14,12 @@
 ###    sleep $(( ( RANDOM % 5 )  + 1 ))
 ###done
 
+#error=OVER_QUERY_LIMIT
+error=REQUEST_DENIED
+
 #
 # if got out of the google query days limit (2500)
-for f in $(grep OVER_QUERY_LIMIT -l data/sites/*); do
+for f in $(grep $error -l data/sites/*); do
     lat=$(echo $f | cut -c15-21)
     lon=$(echo $f | cut -c27-32)
     dist=$(echo $f | cut -c38-39)

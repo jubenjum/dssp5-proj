@@ -8,6 +8,10 @@ import numpy as np
 #from sklearn.neighbors import NearestNeighbors
 
 
+__all__ = ['read_people_signatures', 'build_index_FlatL2', 'search_knn_FlatL2']
+
+
+
 # import faiss library or stop!
 try:
     import faiss
@@ -154,6 +158,8 @@ if __name__ == '__main__':
     print('Doing search ...\n')
     d = 130 # signature dimension
     p_signatures = read_people_signatures(PEOPLE_SIGNATURES)
+
+    # faiss uses np.flota32 
     xb = np.array([x for x in p_signatures['user_signature']], dtype=np.float32)
 
     # building index FlatL2, and 

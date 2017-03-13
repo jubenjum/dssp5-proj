@@ -13,6 +13,8 @@ import datetime as dt
 from pytz import UTC, timezone
 from tzwhere import tzwhere # pip install tzwhere
 
+plt.style.use('ggplot')
+
 # functions to read command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('input_file', metavar='INPUT_FILE', nargs=1, help='...')
