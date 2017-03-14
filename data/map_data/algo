@@ -1,0 +1,45 @@
+mport glob                                                                                     
+                                                                                                
+import numpy as np                                                                              
+import matplotlib.pyplot as plt                                                                 
+plt.style.use('ggplot')                                                                         
+                                                                                                
+lat_paris = 48.8566                                                                             
+lon_paris = 2.3522                                                                              
+lat_correction=1/np.cos(lat_paris*np.pi/180.0)                                                  
+                                                                                                
+inch_ = 2.54                                                                                    
+fig = plt.figure()                                                                              
+ax = fig.add_subplot(1,1,1, adjustable='box',                                                   
+        aspect=lat_correction)                                                                  
+                                                                                                
+# arrondissements                                                                               
+for file_ in glob.glob('a*.xy'):                                                                
+    xy = np.genfromtxt(file_, delimiter=',')                                                    
+    ax.plot(xy[:,1], xy[:,0], color="#777777", linewidth=1)                                     
+                                                                                                
+# get and plot the Seine                                                                        
+for file_ in glob.glob('seine*.xy'):                                                            
+    xy = np.genfromtxt(file_, delimiter=',')                                                    
+    plt.plot(xy[:,1], xy[:,0], color="#6495ED", linewidth=3)                                    
+                                                                                                
+                                                                                                
+# load google sites columns 1,2                                                                 
+xy_goog = np.genfromtxt('../google_sites.csv', delimiter=',', usecols=(0, 1))                   
+plt.plot(xy_goog[:,1], xy[:,0], color="#6495ED", linewidth=3)                                   
+                                                                                                
+# Plot a point for example Eiffel Tower                                                         
+ax.plot(2.2945, 48.8584, '*r', markersize=5)                                                    
+                                                                                                
+ax.set_xlim([2.22, 2.45])                                                                       
+ax.set_ylim([48.80,48.92])                                                                      
+ax.tick_params(labelbottom='off')                                                               
+ax.tick_params(labelleft='off')                                                                 
+                                                                                                
+                                                                                                
+                                                                                                
+#ax.title('Paris', fontsize=20)                                                                 
+plt.show()                                                                                      
+#plt.savefig('', format='pdf')                                                                  
+                                                                                                
+

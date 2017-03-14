@@ -15,18 +15,15 @@ import glob
 import os.path
 import pprint
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-
+import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 
-
 from dspr.sites import Sites 
-from dspr.fais_search import read_people_signatures
 
-__all__ = ['People', 'read_gowalla', ]
+__all__ = ['People', 'read_people_signatures', 'read_gowalla', 'parallel_comp_user_signature' ]
 
 
 # initilize environmental variables
@@ -47,6 +44,15 @@ try:
     PEOPLE_SIGNATURES = os.environ['PEOPLE_SIGNATURES']
 except:
     print('SPOT_SIGNATURES')
+
+
+def read_people_signatures(people_signature_file):
+    ''' read the people signature pickles file that contains a pandas dataframe
+    with user_id and its user_signature build from the spot signatures 
+    '''
+    with open(people_signature_file) as pfile:
+        people_signatures = pickle.load(pfile)
+    return people_signatures 
 
 
 def read_gowalla(file_name):
@@ -111,19 +117,36 @@ class People(Sites):
         self.people_param['data_file'] = data_file
         self.people_param['pandas_data'] = read_gowalla(self.people_param['data_file'])
 
+    
+    def get_user_idx(self, user_id):
+        '''given a user_id return the pandas idx, it will help to know other information
+        for the user
+        '''
+        if not self.people_param['people_signatures']:
+               self.people_param['people_signatures'] = read_people_signatures(PEOPLE_SIGNATURES)
+	try:
+            s_ = self.people_param['people_signatures']
+            idx_ = s_[s_['user_id'] == user_id].index[0]
+        except:
+            raise ValueError('no PEOPLE_SINGATURE // problem in get_user_idx ... nothing found')
+        
+        return idx_
+
 
     def get_user_signature(self, user_id):
         '''get user signature as an np array'''
+        if not self.people_param['people_signatures']: 
+            self.people_param['people_signatures'] = read_people_signatures(PEOPLE_SIGNATURES)
+
 	try:
-	    self.people_param['people_signatures'] = read_people_signatures(PEOPLE_SIGNATURES) 
+            s_ = self.people_param['people_signatures']  
+            r_ = s_[s_['user_id'] == user_id]['user_signature'].values[0]
+            r_ = r_.astype(np.float32) # or with copy=False
+	
 	except:
-	    raise ValueError('no PEOPLE_SINGATURE')
-	s_ = self.people_param['people_signatures']
-	r_ = s_[s_['user_id'] == user_id]['user_signature'].values[0] 
-        r_ = r_.astype(np.float32) # or with copy=False
-	#if not r_:
-	#    raise ValueError('user_id doesnt exit')
-	return r_
+	    raise ValueError('no PEOPLE_SINGATURE // get_user_signature')
+	
+        return r_
 
 
     def save_people_signatures(self, people_signatures_file):
@@ -178,7 +201,8 @@ def parallel_comp_user_signature(pandas_data, pandas_pickle, d, n_neighbours, n_
 
 
 if __name__ == '__main__':
-    
+
+    from sklearn.metrics import pairwise_distances
     # test for Eiffel Tower 
     pkl_file = 'data/spot_sig.pkl'
     pandas_pickle = 'data/sites_pandas.pkl'
@@ -197,30 +221,56 @@ if __name__ == '__main__':
         p.sites_from_pickle(pandas_pickle)
     else :
         p.get_spot_signature(pkl_file)
-    
+   
+    fig, ax = plt.subplots(1)
     # compute all people signatures from the get_people_data
     p.get_people_data(data_gowalla_paris)
     random_user_signature = p.get_user_signature(194166.0)
-    plt.plot(random_user_signature/random_user_signature.sum(), label='user_id 194166')
+    random_user_signature = random_user_signature/random_user_signature.sum()
+    ax.plot(random_user_signature, label='random user [id=194166]')
 
     # extract site signature for eiffel tower
     eiffel = p.sites_find_closer_site(48.8584, 2.2945, 10)
     eiffel_signature = np.array([x for x in eiffel['spot_signature']], dtype=np.float32).sum(axis=0)
-    plt.plot(eiffel_signature/eiffel_signature.sum(), label='Eiffel Tower')
+    eiffel_signature = eiffel_signature/eiffel_signature.sum()
+    ax.plot(eiffel_signature, label='Eiffel Tower', linewidth=2)
     
     # compute the user signature for tourist lambda
     df = parallel_comp_user_signature('data/log-gowalla_tourist.txt', pandas_pickle, d, n_neighbours=10, n_jobs=1)
-    
     turist_type_signature = df['user_signature'].values[0]
-    turist_type_signature = turist_type_signature.astype(np.float32) 
-    plt.plot(turist_type_signature/turist_type_signature.sum(), label='Tourist')
-    plt.legend()
+    turist_type_signature = turist_type_signature.astype(np.float32)
+    turist_type_signature = turist_type_signature/turist_type_signature.sum() 
+    ax.plot(turist_type_signature, label='Tourist')
+    ax.set_xlabel('features/signatures')
+    ax.set_ylabel('normalized counting')
+    ax.legend()
 
     # a local ... with some check-ins 
     df = parallel_comp_user_signature('data/log-gowalla_juanbenjumea.txt', pandas_pickle, d, n_neighbours=10, n_jobs=1)
     me = df['user_signature'].values[0]
-    me = me.astype(np.float32) 
+    me = me.astype(np.float32)
+    me = me/me.sum()
     plt.plot(me/me.sum(), label='Juan B')
     plt.legend()
 
+    ## joining all signatures to compute 
+    fig, ax_ = plt.subplots(1)
+    data_points = np.array([random_user_signature, eiffel_signature, turist_type_signature, me])  
+    all_ = np.array([random_user_signature, eiffel_signature, turist_type_signature, me])
+    l2_sim =  1-pairwise_distances(all_, metric='l2') # similitude 1=same, 0=diff,  0.5=orthogonal
+    labels_ = ['rand user', 'Eiffel Tower', 'Tourist','Juan B']
+    column_labels = labels_
+    row_labels = labels_
+    data = np.array(l2_sim)
+    fig, ax = plt.subplots(1,figsize=(14,5))
+    ax_.pcolor(data, cmap=plt.cm.Reds)
+    ax_.set_xticks(np.arange(data.shape[1])+0.5, minor=False)
+    ax_.set_yticks(np.arange(data.shape[0])+0.5, minor=False)
+    ax_.invert_yaxis()
+    ax_.yaxis.tick_right()
+    ax_.set_xticklabels(row_labels, minor=False, rotation=0, fontsize=20)
+    ax_.set_yticklabels(column_labels, minor=False, fontsize=20)
+    ax_.set_title("L2 similarities");
+    print l2_sim
     plt.show()
+    raw_input()

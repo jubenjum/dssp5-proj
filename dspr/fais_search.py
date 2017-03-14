@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
 import os
-import cPickle as pickle
 
 import pandas as pd
 import numpy as np
-#from sklearn.neighbors import NearestNeighbors
 
 
-__all__ = ['read_people_signatures', 'build_index_FlatL2', 'search_knn_FlatL2']
+from dspr.people import read_people_signatures  
 
+
+__all__ = ['build_index_FlatL2', 'search_knn_FlatL2', 
+           'build_index_fais', 'search_fais']
 
 
 # import faiss library or stop!
@@ -32,13 +33,14 @@ except:
     print('SPOT_SIGNATURES')
 
 
-def read_people_signatures(people_signature_file):
-    ''' read the people signature pickles file that contains a pandas dataframe
-    with user_id and its user_signature build from the spot signatures 
-    '''
-    with open(people_signature_file) as pfile:
-        people_signatures = pickle.load(pfile)
-    return people_signatures 
+# helper
+def build_index_fais(xb, d):
+    ''' '''
+    return build_index_FlatL2(xb, d)
+
+def search_fais(index, xq, k):
+    ''' '''
+    return search_knn_FlatL2(index, xq, k)
 
 
 def build_index_FlatL2(xb, d):
@@ -56,7 +58,6 @@ def build_index_FlatL2(xb, d):
     index = faiss.IndexFlatL2(d)   # build the index
     assert index.is_trained
     index.add(xb)                  # add vectors to the index
-    print('index ntotal={}'.format(index.ntotal))
     return index
 
 def build_index_IVFFlat(xb, d, nlist=10):
@@ -105,7 +106,7 @@ def build_index_IVFFlatQ(xb, d, m=8, nlist=10):
     return index 
 
 
-def search_knn_FlatL2(index, xq, k=5):
+def search_knn_FlatL2(index, xq, k):
     ''' search K nearest-neighbor from the trained index, for the
     the query xq, the inputs are:
 
