@@ -9,6 +9,8 @@ import timeit
 import numpy as np
 import pandas as pd
 import networkx as nx
+import networkx.algorithms.approximation as nxa
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
@@ -80,7 +82,7 @@ for n in I_s:
 print nx.info(G_scikit)
 
 ##############################
-# Testing SCIKIT
+# Testing FAIS 
 print('Doing faiss ...')
 index_fais = build_index_fais(xb, d)
 D_f, I_f = search_fais(index_fais, xq , k)
@@ -93,9 +95,16 @@ for n in I_f:
 print nx.info(G_fais)
 
 
-list_eval = [ nx.could_be_isomorphic, nx.transitivity, nx.average_clustering]]  
+def apply_fun(fun, G1, G2):
+    print '{}: {} {}'.format( fun.__name__, fun(G1), fun(G2))
 
 
+func_ = [nx.transitivity, nxa.min_weighted_vertex_cover] #, nxa.maximum_independent_set, nxa.ramsey_R2]
+func_ = [nx.transitivity, nxa.ramsey_R2]
+
+
+################################
+# looking for different metrics
 
 print '~~~~~~~~~~~~~~~~~~~~~~'
 print 'number of samples: {}'.format(len(I_f))
@@ -103,22 +112,17 @@ print 'number of samples: {}'.format(len(I_f))
 print 'Is isomorphic: {}'.format(nx.is_isomorphic(G_scikit,G_fais))
 print 'could be isomorphic: {}'.format(nx.could_be_isomorphic(G_scikit,G_fais))
 
+# scores that needs more than 
 # how dense are the connections
 print 'median #triangles: {} {}'.format(np.median(nx.triangles(G_scikit).values()), 
                                         np.median(nx.triangles(G_fais).values()) )
+
 # Compute graph transitivity, the fraction of all possible triangles present in G
-print 'transitivity: {} {}'.format( nx.transitivity(G_scikit), nx.transitivity(G_fais)  )
 print 'average clustering: {} {}'.format(nx.average_clustering(G_scikit), nx.average_clustering(G_fais))
-print 'number of cliques: {} {}'.format( len(list(nx.find_cliques(G_scikit))), len(list(nx.find_cliques(G_fais))))
+print '#cliques: {} {}'.format( len(list(nx.find_cliques(G_scikit))), len(list(nx.find_cliques(G_fais))))
+print '#min_maximal_matching : {} {}'.format(len(nxa.min_maximal_matching(G_scikit)), 
+        len(nxa.min_maximal_matching(G_fais)) )
 
-##############################
-### RESULT FROM THE REAL DATA
-############################## 
-#= timeit.Timer('example.fun(input)','import example')
-
-
-
-
-## computing time
-
+for fun in func_:
+    apply_fun(fun, G_scikit, G_fais)
 
