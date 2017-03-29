@@ -2,9 +2,9 @@ dssp5-proj
 ==========
 
 
-This is the project for DSSP5 Ecole Polytechnique 
+This is the project for the Data Science accreditation at the Ecole Polytechnique - DSSP5 
 
-get the information from
+Gowalla database can be downloaded from:
 
 https://snap.stanford.edu/data/loc-gowalla.html
 
